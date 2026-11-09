@@ -258,6 +258,25 @@
 #walletOverlayControls #walletControls{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}#walletOverlayControls #walletBalanceSection{grid-column:1;grid-row:1}#walletOverlayControls #reflectionsSection{grid-column:1;grid-row:2}#walletOverlayControls #gameRewardsSection{grid-column:1;grid-row:3}#walletOverlayControls #tradeCard{grid-column:2;grid-row:1}#walletOverlayControls #rewardHistorySection{grid-column:2;grid-row:2}#walletOverlayControls #walletControls>details>summary{pointer-events:none;cursor:default;list-style:none}#walletOverlayControls #walletControls>details>summary::-webkit-details-marker{display:none}#walletOverlayControls #walletControls>details>summary::after{display:none!important}#walletBalanceSection .wallet-stats-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #28415a}#walletBalanceSection .wallet-stats-row strong{font-variant-numeric:tabular-nums}#walletBalanceSection .wallet-stats-row:first-of-type{margin-top:12px}@media(max-width:650px){#walletOverlayControls #walletControls{grid-template-columns:1fr}#walletOverlayControls #walletControls>details{grid-column:1!important;grid-row:auto!important}}
 
   #myWalletBtn.claim-ready,#mobileWalletBtn.claim-ready{border-color:var(--green)!important;box-shadow:0 0 0 1px #38e39b66,0 0 16px #38e39b33!important}
+  /* Compact marketplace: preserve existing cart/quote and checkout bindings. */
+  .marketplace-panel .shop-grid{gap:8px}
+  .marketplace-panel .compact-shop-item{display:flex;align-items:center;gap:9px;padding:10px;min-width:0}
+  .compact-shop-item .shop-icon{font-size:23px;min-width:27px;text-align:center}
+  .compact-shop-item .shop-name{font-size:13px;font-weight:700;flex:1;min-width:0}
+  .compact-shop-item .quantity-controls{display:flex;align-items:center;gap:5px;margin:0;justify-content:flex-end}
+  .compact-shop-item .quantity-controls button{min-width:34px;min-height:36px;padding:5px 8px}
+  .compact-shop-item output{min-width:20px}
+  .compact-shop-item .shop-info-btn{border:0;background:transparent;color:#a8d2ff;font-size:23px;cursor:pointer;padding:4px}
+  .shop-info-dialog{color:var(--text);background:#0c1b2e;border:1px solid #3a6b9b;border-radius:16px;padding:18px;width:min(420px,calc(100vw - 28px));max-height:85vh;overflow:auto;box-shadow:0 20px 70px #000b}
+  .shop-info-dialog::backdrop{background:rgba(2,7,18,.78)}
+  .shop-info-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .shop-info-top h3{margin:0}.shop-info-top button{background:transparent;border:0;color:var(--text);font-size:22px;cursor:pointer}
+  .shop-info-entry{border:1px solid var(--line);border-radius:12px;padding:13px;margin-top:10px;background:#0a1727}
+  .shop-info-heading{display:flex;gap:10px;align-items:center;font-size:17px}
+  .shop-info-entry p{color:#b8cce2;font-size:13px;line-height:1.5}
+  .shop-info-entry [id^="shopPrice"]{color:#90cbff;font-weight:700;font-size:13px}
+  .shop-coming{font-size:12px;color:var(--muted)}
+  @media(max-width:420px){.compact-shop-item{gap:5px!important}.compact-shop-item .shop-name{font-size:11px}.compact-shop-item .quantity-controls button{min-width:30px;padding:4px}.compact-shop-item .shop-icon{min-width:23px;font-size:19px}}
 </style>
 </head>
 <body>
@@ -398,14 +417,16 @@
 
         <details id="marketplacePanel" class="marketplace-panel card section-card">
           <summary>🛒 Marketplace <span id="cartSummary">Add powerups</span></summary><div class="section-body">
-          <p>Stock up anytime. Activate owned powerups below during gameplay.</p>
           <div class="shop-grid">
-            <article class="shop-item"><b>🟢 Double Drop</b><p>Two balls per normal click for 15 seconds.</p><div id="shopPrice1">250 TEST-HPL each</div><div class="quantity-controls"><button data-cart-id="1" data-cart-step="-1" aria-label="Remove one Double Drop">−</button><output id="cartQuantity1">0</output><button data-cart-id="1" data-cart-step="1" aria-label="Add one Double Drop">+</button></div></article>
-            <article class="shop-item"><b>↔ Paddle Extender</b><p>Double the paddle width for 8 seconds.</p><div id="shopPrice2">175 TEST-HPL each</div><div class="quantity-controls"><button data-cart-id="2" data-cart-step="-1" aria-label="Remove one Paddle Extender">−</button><output id="cartQuantity2">0</output><button data-cart-id="2" data-cart-step="1" aria-label="Add one Paddle Extender">+</button></div></article>
-            <article class="shop-item coming"><b>Wide Ball</b><p>Coming soon</p></article>
-            <article class="shop-item"><b>🧲 Lightning Magnet</b><p>Pull nearby balls toward lightning bolts for 25 seconds.</p><div id="shopPrice3">200 TEST-HPL each</div><div class="quantity-controls"><button data-cart-id="3" data-cart-step="-1" aria-label="Remove one Lightning Magnet">−</button><output id="cartQuantity3">0</output><button data-cart-id="3" data-cart-step="1" aria-label="Add one Lightning Magnet">+</button></div></article>
-            <article class="shop-item coming"><b>Extra Super Ball</b><p>Coming soon</p></article>
+            <article class="shop-item compact-shop-item"><span class="shop-icon" aria-hidden="true">🟢</span><span class="shop-name">Double Drop</span><div class="quantity-controls"><button data-cart-id="1" data-cart-step="-1" aria-label="Remove one Double Drop">−</button><output id="cartQuantity1">0</output><button data-cart-id="1" data-cart-step="1" aria-label="Add one Double Drop">+</button></div><button class="shop-info-btn" type="button" data-shop-info="1" aria-label="About Double Drop">ⓘ</button></article>
+            <article class="shop-item compact-shop-item"><span class="shop-icon" aria-hidden="true">↔️</span><span class="shop-name">Paddle Extender</span><div class="quantity-controls"><button data-cart-id="2" data-cart-step="-1" aria-label="Remove one Paddle Extender">−</button><output id="cartQuantity2">0</output><button data-cart-id="2" data-cart-step="1" aria-label="Add one Paddle Extender">+</button></div><button class="shop-info-btn" type="button" data-shop-info="2" aria-label="About Paddle Extender">ⓘ</button></article>
+            <article class="shop-item compact-shop-item"><span class="shop-icon" aria-hidden="true">🧲</span><span class="shop-name">Lightning Magnet</span><div class="quantity-controls"><button data-cart-id="3" data-cart-step="-1" aria-label="Remove one Lightning Magnet">−</button><output id="cartQuantity3">0</output><button data-cart-id="3" data-cart-step="1" aria-label="Add one Lightning Magnet">+</button></div><button class="shop-info-btn" type="button" data-shop-info="3" aria-label="About Lightning Magnet">ⓘ</button></article>
           </div>
+          <dialog id="shopInfoDialog" class="shop-info-dialog" aria-labelledby="shopInfoTitle"><div class="shop-info-top"><h3 id="shopInfoTitle">ⓘ Powerups</h3><button type="button" id="shopInfoClose" aria-label="Close powerup information">✕</button></div>
+      <article class="shop-info-entry"><div class="shop-info-heading"><span aria-hidden="true">🟢</span><b>Double Drop</b></div><p>Two balls per normal click for 15 seconds.</p><div id="shopPrice1">Price loading…</div></article>
+      <article class="shop-info-entry"><div class="shop-info-heading"><span aria-hidden="true">↔️</span><b>Paddle Extender</b></div><p>Double the paddle width for 8 seconds.</p><div id="shopPrice2">Price loading…</div></article>
+      <article class="shop-info-entry"><div class="shop-info-heading"><span aria-hidden="true">🧲</span><b>Lightning Magnet</b></div><p>Pull nearby balls toward lightning bolts for 25 seconds.</p><div id="shopPrice3">Price loading…</div></article>
+          <div class="shop-info-entry shop-coming">Wide Ball &amp; Extra Super Ball — Coming soon</div></dialog>
           <div id="purchaseTotal" class="checkout-total" aria-live="polite">Total: 0 TEST-HPL</div>
           <div id="purchaseBalance" class="mini">Balance: connect your wallet</div>
           <div class="mini">Network fee shown in MetaMask.</div>
@@ -2552,7 +2573,11 @@ document.addEventListener('pointerdown',hplUnlockAudio,{capture:true,passive:tru
 window.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById('soundToggle');b.onclick=()=>{hplSoundEnabled=!hplSoundEnabled;try{localStorage.setItem('hpl-v3-sound',hplSoundEnabled?'on':'off');}catch{}hplRenderSound();if(hplSoundEnabled){hplUnlockAudio();hplSound('bucket',3);}};if(!window.AudioContext&&!window.webkitAudioContext){b.disabled=true;b.textContent='Sound unavailable';}else hplRenderSound();});
 </script>
 
-<button id="soundToggle" type="button" aria-pressed="false" aria-label="Enable game sound">Sound: Off</button></body>
+<button id="soundToggle" type="button" aria-pressed="false" aria-label="Enable game sound">Sound: Off</button><script>
+/* Marketplace information overlay (display only; checkout remains unchanged). */
+(()=>{const dialog=document.getElementById('shopInfoDialog');if(!dialog)return;document.querySelectorAll('[data-shop-info]').forEach(button=>button.addEventListener('click',()=>{if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');}));document.getElementById('shopInfoClose')?.addEventListener('click',()=>dialog.close?.());dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close?.();});})();
+</script>
+</body>
 </html>
 
 
