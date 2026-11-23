@@ -10,3 +10,13 @@ body::before{
   pointer-events:none;
   background:linear-gradient(#0b111b44,#0b111b33),url("tropical-beach.webp") 67% center / cover no-repeat;
 }
+
+/* Draw attention to the music control only while playback is paused. */
+#walletMusicToggle.primary {
+  background: #ffe399;
+  border-color: #fff0bd;
+  box-shadow: 0 0 0 2px #efc77366, 0 0 18px #efc77366;
+}
+#walletMusicToggle.primary:hover {
+  background: #fff0bd;
+}
