@@ -101,6 +101,10 @@
   .intermission-card .clock{font-size:clamp(48px,9vw,86px);font-weight:900;line-height:1.25;color:#ffd34d;font-variant-numeric:tabular-nums}
   .intermission-card .sub{font-size:13px;color:#a8c4dd}
 
+  .board-scoreboard{position:absolute;top:8px;right:8px;z-index:9;display:grid;gap:2px;min-width:96px;max-width:48%;padding:5px 8px;border:1px solid #38536f;border-radius:8px;background:#050d17ed;color:#eaf4ff;font-size:11px;line-height:1.35;pointer-events:none;font-variant-numeric:tabular-nums}
+  .board-scoreboard div{display:flex;justify-content:space-between;gap:7px}
+  .board-scoreboard strong{color:#ffd873;text-align:right;overflow-wrap:anywhere}
+  @media(max-width:760px){.board-wrap .pool-chip{left:8px;transform:none;max-width:46%}}
   .pool-chip,.hint{pointer-events:none}
   .pool-chip{
     position:absolute;left:50%;top:14px;transform:translateX(-50%);
@@ -364,6 +368,10 @@
       </div>
 
       <div class="board-wrap">
+        <section class="board-scoreboard" aria-label="Current round scoreboard">
+          <div><span>Leader</span><strong id="boardLeader">—</strong></div>
+          <div><span>You</span><strong id="boardYourPosition">—</strong></div>
+        </section>
         <canvas id="board"></canvas><div id="intermissionOverlay" class="intermission-overlay" hidden aria-live="off"><div class="intermission-card"><div class="label">Next round begins in</div><div id="intermissionCountdown" class="clock">00:30</div><div class="sub">Get ready for the next round!</div></div></div>
         <div class="pool-chip">
           <small>Live Reward Pool</small>
@@ -1146,6 +1154,7 @@ async function startGameSession(){
   }
   if(data.server_time) state.serverOffset=new Date(data.server_time).getTime()-(requestStarted+Date.now())/2;
   state.liveResults=null;state.lastLiveAt=0;state.liveSessionId=null;
+  $("boardLeader").textContent="—";$("boardYourPosition").textContent="—";
   $("position").textContent="—";$("positionLabel").textContent="Current position";
   $("liveLeaderboard").textContent="Loading current standings…";$("yourLiveResult").hidden=true;
   $("liveStatus").textContent="Provisional · syncing scores";
@@ -1413,6 +1422,9 @@ function renderLiveLeaderboard(data){
     $("position").textContent=resultRank(data.your_result);
     $("yourLiveResult").textContent=`You: ${resultRank(data.your_result)} of ${Number(data.players)} · ${resultPoints(data.your_result.score)} points`;
   }else $("position").textContent="—";
+  const leader=rows.find(row=>row.placement===1);
+  $("boardLeader").textContent=leader?`#1 · ${resultPoints(leader.score)} pts`:"—";
+  $("boardYourPosition").textContent=$("position").textContent;
   $("positionLabel").textContent="Current position";
   $("liveStatus").textContent=data.snapshot_reason==="SNAPSHOT_OUTSIDE_LIMITS"?"Provisional · your latest update was outside score limits":
     `Provisional · updates every ${LIVE_REFRESH_MS/1000}s · ${Number(data.players)} players`;
@@ -2469,6 +2481,7 @@ function resetWallet(){
   Object.assign(reflectionState,{loaded:false,readBusy:false,claimBusy:false,amount:null,balance:null,feeExempt:false,paused:false,excluded:false,pending:null,error:"",notice:"",lastRefresh:0,balanceGeneration:0});
   purchaseState.epoch++;purchaseState.busy=false;purchaseState.pending=null;purchaseState.balance=null;purchaseState.balanceError=false;purchaseState.refreshAfterCredit=false;purchaseState.unitPrice=250000000000000000000n;purchaseState.quoteBusy=false;$("purchaseReceiptHash").value="";$("purchaseStatus").textContent="Add powerups to your cart.";updatePurchaseButton();
   state.liveResults=null;state.lastLiveAt=0;state.liveSessionId=null;
+  $("boardLeader").textContent="—";$("boardYourPosition").textContent="—";
   displayedRewardWindow=null;$("tournamentCard").hidden=true;$("liveLeaderboardTitle").textContent="Current round leaderboard";$("liveLeaderboard").textContent="Waiting for players.";
   $("liveStatus").textContent="Connect your wallet to see current standings.";$("yourLiveResult").hidden=true;
   state.roundResults=null;state.standingsError=null;state.lastStandingsAt=0;state.standingsPhase=null;
