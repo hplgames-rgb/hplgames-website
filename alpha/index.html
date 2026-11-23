@@ -284,6 +284,7 @@
   #walletOverlayControls #walletControls .card{margin:0}
   .wallet-jump-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 12px}
   .wallet-jump-links a{display:grid;gap:3px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;color:var(--text);font-size:clamp(13px,1.6vw,15px);overflow-wrap:anywhere}
+  .game-wallet-jumps{flex:none}
   .wallet-jump-links strong{font-size:clamp(14px,1.8vw,17px);font-variant-numeric:tabular-nums}
   #walletOverlayControls .wallet-column>details{scroll-margin-top:12px}
   @media(max-width:760px){#walletOverlayControls .wallet-column>details{scroll-margin-top:110px}}
@@ -322,6 +323,11 @@
       <div class="status"><span id="statusDot" class="dot"></span><span id="connection">Not connected</span></div>
     </div>
   </header>
+  <nav class="wallet-jump-links game-wallet-jumps" aria-label="Wallet shortcuts">
+  <a aria-haspopup="dialog" href="#walletBalanceSection"><span>HPL balance</span><strong data-wallet-amount="balance">—</strong></a>
+  <a aria-haspopup="dialog" href="#reflectionsSection"><span>Claimable reflections</span><strong data-wallet-amount="reflections">—</strong></a>
+  <a aria-haspopup="dialog" href="#gameRewardsSection"><span>Claimable rewards</span><strong data-wallet-amount="rewards">—</strong></a>
+</nav>
 
   <nav class="mobile-only mobile-nav" aria-label="Game navigation">
     <button type="button" id="mobileGameBtn" aria-current="page">Game</button>
@@ -499,9 +505,9 @@
  <p class="mini">The next round starts automatically. You can reopen these results from the game controls.</p>
 </dialog>
 <dialog id="walletOverlay" aria-labelledby="walletOverlayTitle"><div class="wallet-overlay-header"><div><h2 id="walletOverlayTitle">My HPL Wallet</h2><p class="mini">Base Sepolia · Alpha testing</p><p class="mobile-only mobile-round-clock" data-mobile-clock>Round continues while you browse</p></div><a href="https://hplgames-rgb.github.io/ball-drop-poc/wallet/" target="_blank" rel="noopener" class="wallet-refresh" style="color:var(--text);font-size:12px">Open standalone wallet ↗</a><button id="closeWalletBtn" type="button" class="wallet-refresh">Back to game ✕</button></div><div class="wallet-overlay-content"><nav class="wallet-jump-links" aria-label="Wallet sections">
-  <a href="#walletBalanceSection"><span>HPL balance</span><strong id="walletJumpBalance">—</strong></a>
-  <a id="walletJumpReflectionsLink" href="#reflectionsSection"><span>Claimable reflections</span><strong id="walletJumpReflections">—</strong></a>
-  <a id="walletJumpRewardsLink" href="#gameRewardsSection"><span>Claimable rewards</span><strong id="walletJumpRewards">—</strong></a>
+  <a href="#walletBalanceSection"><span>HPL balance</span><strong data-wallet-amount="balance">—</strong></a>
+  <a href="#reflectionsSection"><span>Claimable reflections</span><strong data-wallet-amount="reflections">—</strong></a>
+  <a href="#gameRewardsSection"><span>Claimable rewards</span><strong data-wallet-amount="rewards">—</strong></a>
 </nav><div id="walletOverlayControls"></div><details class="card"><summary>Wallet feedback</summary><p class="mini">Tell us what feels easy or confusing. Copy your feedback to share with the alpha organizer.</p><textarea id="walletFeedback" rows="5" maxlength="2000" placeholder="I prefer the side panel / full wallet because…"></textarea><button id="copyWalletFeedbackBtn" type="button" class="wallet-refresh">Copy feedback</button><p id="walletFeedbackStatus" class="mini" role="status"></p></details></div></dialog>
 <script>
 let testingPaused=true;
@@ -2013,9 +2019,12 @@ function restoreReflectionClaim(){
   renderReflections();
 }
 function simulatedDollar(amount){if(amount===null)return "—";const cents=(amount+10n**18n/2n)/10n**18n;return "$"+(cents/100n).toLocaleString("en-US")+"."+(cents%100n).toString().padStart(2,"0");}
+function renderWalletShortcutAmount(key,amount){
+ for(const value of document.querySelectorAll(`[data-wallet-amount="${key}"]`))value.textContent=amount;
+}
 function renderReflections(){renderClaimSections(); $("walletDollarValue").textContent=simulatedDollar(reflectionState.balance);$("reflectionDollarValue").textContent=simulatedDollar(reflectionState.amount);
-  $("walletJumpBalance").textContent=reflectionState.balance===null?"—":`${formatBalance(reflectionState.balance)} TEST-HPL · ${simulatedDollar(reflectionState.balance)}`;
-  $("walletJumpReflections").textContent=reflectionState.amount===null?"—":`${formatBalance(reflectionState.amount)} TEST-HPL`;
+  renderWalletShortcutAmount("balance",reflectionState.balance===null?"—":`${formatBalance(reflectionState.balance)} TEST-HPL · ${simulatedDollar(reflectionState.balance)}`);
+  renderWalletShortcutAmount("reflections",reflectionState.amount===null?"—":`${formatBalance(reflectionState.amount)} TEST-HPL`);
   $("quickWalletBalance").textContent=reflectionState.balance===null?"Connect your wallet":`${formatBalance(reflectionState.balance)} TEST-HPL`;$("quickReflections").textContent=reflectionState.amount===null?"Reflections: —":`Claimable reflections: ${formatBalance(reflectionState.amount)} TEST-HPL`;
   $("reflectionWalletBalance").textContent=reflectionState.balance===null?state.wallet?"Loading…":"Connect your wallet":`${formatBalance(reflectionState.balance)} TEST-HPL`;
   $("reflectionAmount").textContent=reflectionState.amount===null?"— TEST-HPL":`${formatBalance(reflectionState.amount)} TEST-HPL`;
@@ -2256,10 +2265,10 @@ function renderClaimSections(){
  const reflectionReady=!!(!testingPaused && state.sessionToken && state.wallet && state.provider && reflectionState.loaded && reflectionState.amount>0n && reflectionState.feeExempt && !reflectionState.paused && !reflectionState.excluded && !reflectionState.pending && !reflectionState.claimBusy);
  const rewardsReady=!!(!testingPaused && state.sessionToken && state.wallet && state.provider && !rewardState.busy && !Object.values(rewardState.pendingByAddress).some(Boolean) && rewardState.sources.some(r=>r.loaded && r.amount>0n && r.feeExempt && !r.paused && !rewardState.pendingByAddress[r.address]));
  for(const [id,badge,ready] of [["reflectionsSection","reflectionClaimBadge",reflectionReady],["gameRewardsSection","gameRewardClaimBadge",rewardsReady]]){
-  if(ready)$(id).classList.add("claim-ready");else $(id).classList.remove("claim-ready");$(badge).hidden=!ready;
+  $(id).classList.toggle("claim-ready",ready);
+  $(badge).hidden=!ready;
+  for(const link of document.querySelectorAll(`.wallet-jump-links a[href="#${id}"]`))link.classList.toggle("claim-ready",ready);
  }
- $("walletJumpReflectionsLink").classList.toggle("claim-ready",reflectionReady);
- $("walletJumpRewardsLink").classList.toggle("claim-ready",rewardsReady);
  const available=[reflectionReady?"reflections":"",rewardsReady?"game rewards":""].filter(Boolean);
  for(const id of ["myWalletBtn","mobileWalletBtn"]){
   const button=$(id);if(available.length)button.classList.add("claim-ready");else button.classList.remove("claim-ready");
@@ -2273,7 +2282,7 @@ function renderGameRewards(){
  const total=known.reduce((sum,r)=>sum+r.amount,0n);
  $("gameRewardDollarValue").textContent=known.length?`${partial?"At least ":""}${simulatedDollar(total)}`:"—";
  $("gameRewardAmount").textContent=known.length?`${partial?"At least ":""}${formatBalance(total)} TEST-HPL`:"— TEST-HPL";
- $("walletJumpRewards").textContent=known.length?$("gameRewardAmount").textContent:"—";
+ renderWalletShortcutAmount("rewards",known.length?$("gameRewardAmount").textContent:"—");
  const breakdown=$("gameRewardSources");breakdown.replaceChildren();
  if(REWARDS.currentAddress){
   for(const target of rewardTargets()){
@@ -2467,9 +2476,13 @@ async function refreshWalletStats(){const el=$('walletGasBalance'),usd=$('wallet
 
 $('refreshWalletStatsBtn').addEventListener('click',()=>{void refreshWalletStats();void refreshReflections();void refreshGameRewards();});
 function openWalletOverlay(){if($("mobilePanel").open)$("mobilePanel").close();setMobileNav("wallet");const modal=$("walletOverlay");if(modal.open)return;walletReturnFocus=document.activeElement;modal.showModal();modal.scrollTop=0;$("walletOverlayControls").appendChild($("walletControls"));walletSectionOpenStates=[...document.querySelectorAll("#walletControls details")].map(el=>({el,open:el.open}));for(const {el} of walletSectionOpenStates)el.open=true;$("quickWalletSummary").hidden=false;document.body.classList.add("wallet-open");$("closeWalletBtn").focus();void refreshReflections();void refreshGameRewards();void refreshRewardHistory();void refreshWalletStats();}
-for(const link of $("walletOverlay").querySelectorAll(".wallet-jump-links a")){
+for(const link of document.querySelectorAll(".wallet-jump-links a")){
  link.addEventListener("click",event=>{
   event.preventDefault();
+  if(!$("walletOverlay").open){
+   openWalletOverlay();
+   walletReturnFocus=link;
+  }
   const section=$(link.hash.slice(1));
   section.open=true;
   section.querySelector("summary").focus({preventScroll:true});
