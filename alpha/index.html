@@ -2625,7 +2625,7 @@ window.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById(
     <div class="hpl-streak-summary" id="hplStreakResultStats" hidden>
       <div class="hpl-streak-stat"><span class="hpl-streak-meta">Simulated pool at close</span><strong id="hplStreakResultPool">—</strong></div>
       <div class="hpl-streak-stat"><span class="hpl-streak-meta">Wallets that qualified</span><strong id="hplStreakResultWallets">—</strong></div>
-      <div class="hpl-streak-stat"><span class="hpl-streak-meta">Your simulated share</span><strong id="hplStreakResultShare">—</strong></div>
+      <div class="hpl-streak-stat"><span class="hpl-streak-meta" id="hplStreakResultShareLabel">Your simulated share</span><strong id="hplStreakResultShare">—</strong></div>
     </div>
     <p class="hpl-streak-meta" id="hplStreakClaimStatus" aria-live="polite"></p>
     <button type="button" id="hplStreakClaimButton" hidden>Simulate claim</button>
@@ -2678,7 +2678,55 @@ window.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById(
   }
   let claimEpoch=null, claimPending=false;
   const claimButton=el("hplStreakClaimButton");
+
+  let onchainClaim=null, resultRevision=0;
+  async function loadStreakClaim(result, revision){
+    const {wallet,provider,sessionToken}=state;
+    if(!wallet||!provider||!sessionToken||!result?.qualified||result.reconciling||result.simulated_claim)return;
+    const version=purchaseState.epoch;
+    const {Interface,encodeBytes32String}=await import("https://cdn.jsdelivr.net/npm/ethers@6.13.5/+esm");
+    const abi=new Interface([
+      "function playerRewardCount(address) view returns (uint256)",
+      "function playerRewardIdAt(address,uint256) view returns (uint256)",
+      "function rewards(uint256) view returns (address player,bytes32 gameId,uint256 epochId,uint256 rewardEventId,bytes32 externalRef,uint32 batchId,uint256 amount,uint64 reservedAt,uint64 expiresAt,bool claimed,bool reclaimed)",
+      "function claimRewardIds(uint256[]) returns (uint256)"
+    ]);
+    await assertPurchaseWallet(wallet,version);
+    const address=REWARDS.currentAddress;
+    const block=await walletRpc(provider,"eth_blockNumber");
+    const read=async(name,args)=>abi.decodeFunctionResult(name,await walletRpc(provider,"eth_call",[{to:address,data:abi.encodeFunctionData(name,args)},block]));
+    const [count]=await read("playerRewardCount",[wallet]);
+    const game=encodeBytes32String("DAILY_STREAK");
+    const ref=encodeBytes32String("daily-streak:"+result.epoch_id);
+    for(let end=count;end>0n;){
+      if(revision!==resultRevision||state.sessionToken!==sessionToken||purchaseState.epoch!==version)return;
+      const indices=[];
+      while(end>0n&&indices.length<8)indices.push(--end);
+      const entries=await Promise.all(indices.map(async index=>{
+        const [id]=await read("playerRewardIdAt",[wallet,index]);
+        return {id,reward:await read("rewards",[id])};
+      }));
+      const match=entries.find(({reward})=>reward.player.toLowerCase()===wallet&&reward.gameId===game&&reward.externalRef===ref&&reward.amount>0n);
+      if(!match)continue;
+      if(revision!==resultRevision||state.sessionToken!==sessionToken||purchaseState.epoch!==version)return;
+      const {id,reward}=match;
+      el("hplStreakResultPool").parentElement.hidden=true;
+      el("hplStreakResultShareLabel").textContent="Your reserved share";
+      el("hplStreakResultShare").textContent=formatStreakHpl(reward.amount.toString());
+      const status=el("hplStreakClaimStatus");
+      status.textContent=reward.claimed?"TEST-HPL claimed.":reward.reclaimed||reward.expiresAt<=BigInt(Math.floor(Date.now()/1000))?"The claim window has closed.":"Reserved on Base Sepolia: "+formatStreakHpl(reward.amount.toString());
+      claimButton.hidden=reward.claimed||reward.reclaimed||reward.expiresAt<=BigInt(Math.floor(Date.now()/1000));
+      claimButton.textContent="Claim TEST-HPL";
+      if(!claimButton.hidden)onchainClaim={id,abi,wallet,provider,version,address};
+      return;
+    }
+  }
   function showCompleted(result, unavailable=false){
+    const revision=++resultRevision;
+    onchainClaim=null;
+    claimButton.textContent="Simulate claim";
+    el("hplStreakResultShareLabel").textContent="Your simulated share";
+    el("hplStreakResultPool").parentElement.hidden=false;
     claimEpoch=result?.epoch_id??null;
     claimButton.hidden=!result?.can_simulate_claim;
     const container=el("hplStreakResults");
@@ -2701,18 +2749,37 @@ window.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById(
         ?"Results may change during the one-hour reconciliation period."
         :result.can_simulate_claim
           ?"Record a simulated claim for this wallet. No tokens will be transferred."
-          :"Simulation only. TEST-HPL claims are disabled.";
+          :"Waiting for a confirmed TEST-HPL reservation.";
+    if(!result.can_simulate_claim)void loadStreakClaim(result,revision).catch(()=>{
+      if(revision===resultRevision&&result.qualified&&!result.simulated_claim)el("hplStreakClaimStatus").textContent="Unable to check the reservation. Try Refresh status.";
+    });
   }
   claimButton.addEventListener("click",async ()=>{
     const token=state.sessionToken;
-    if(!token||!claimEpoch||claimPending||busy)return;
+    if(!token||!claimEpoch||claimPending||busy||claimButton.hidden)return;
     claimPending=true;
     claimButton.disabled=true;
     try{
+      if(onchainClaim){
+        const {id,abi,wallet,provider,version,address}=onchainClaim;
+        await assertPurchaseWallet(wallet,version);
+        const snapshot=await rewardSnapshot(wallet,provider);
+        const source=snapshot.sources.find(entry=>entry.address.toLowerCase()===address.toLowerCase());
+        if(!source?.loaded||source.paused||!source.feeExempt)throw new Error("TEST-HPL claims are temporarily unavailable.");
+        const tx={from:wallet,to:address,data:abi.encodeFunctionData("claimRewardIds",[[id]]),value:"0x0"};
+        await walletRpc(provider,"eth_call",[tx,"latest"]);
+        await assertPurchaseWallet(wallet,version);
+        const hash=await provider.request({method:"eth_sendTransaction",params:[tx]});
+        if(state.sessionToken===token){
+          claimButton.hidden=true;
+          el("hplStreakClaimStatus").textContent="Claim submitted. Check MetaMask for confirmation, then refresh status. "+hash;
+        }
+        return;
+      }
       const result=await edgeRequest("hpl-daily-streak",{session_token:token,action:"simulate_claim",epoch_id:claimEpoch});
       if(state.sessionToken===token)showCompleted(result.completed_result);
     }catch(err){
-      if(state.sessionToken===token)el("hplStreakClaimStatus").textContent=err?.message||"Unable to record simulated claim.";
+      if(state.sessionToken===token)el("hplStreakClaimStatus").textContent=err?.message||"Unable to submit the claim.";
     }finally{
       claimPending=false;
       claimButton.disabled=false;
