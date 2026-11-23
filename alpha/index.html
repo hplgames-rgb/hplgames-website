@@ -2611,9 +2611,9 @@ window.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById(
   <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><strong>🔥 V4 Daily Streak · Testnet</strong><span class="hpl-streak-meta">Admin-scheduled UTC days</span></div>
   <p id="hplStreakStatus" role="status">Connect your wallet to begin today's missions.</p>
   <div class="hpl-streak-summary" id="hplStreakSummary" hidden>
-    <div class="hpl-streak-stat"><span class="hpl-streak-meta">Simulated streak pool</span><strong id="hplStreakPool">—</strong></div>
+    <div class="hpl-streak-stat"><span class="hpl-streak-meta">Funded streak pool</span><strong id="hplStreakPool">—</strong></div>
     <div class="hpl-streak-stat"><span class="hpl-streak-meta">Wallets still in the running</span><strong id="hplStreakWalletCount">—</strong></div>
-    <div class="hpl-streak-stat"><span class="hpl-streak-meta">Simulated share per qualifying wallet</span><strong id="hplStreakEstimate">—</strong></div>
+    <div class="hpl-streak-stat"><span class="hpl-streak-meta">Estimated share per qualifying wallet</span><strong id="hplStreakEstimate">—</strong></div>
   </div>
   <p class="hpl-streak-meta" id="hplStreakParticipation" hidden></p>
   <div class="hpl-streak-days" id="hplStreakDays"><div class="hpl-streak-day">Day 1 · —</div><div class="hpl-streak-day">Day 2 · —</div><div class="hpl-streak-day">Day 3 · —</div></div>
@@ -2670,11 +2670,11 @@ window.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById(
     if(!summary)return;
     const wallets=summary.wallets_in_running;
     const completed=summary.wallets_completed_today;
-    el("hplStreakPool").textContent=formatStreakHpl(summary.simulated_pool_wei);
+    el("hplStreakPool").textContent=formatStreakHpl(summary.pool_wei);
     el("hplStreakWalletCount").textContent=wallets.toLocaleString();
-    el("hplStreakEstimate").textContent=wallets?formatStreakHpl(summary.simulated_payout_wei):"—";
+    el("hplStreakEstimate").textContent=wallets?formatStreakHpl(summary.estimated_payout_wei):"—";
     progress.textContent=completed.toLocaleString()+" of "+wallets.toLocaleString()
-      +" wallets still in the running completed today. The simulated share can change until the streak ends. Test payouts disabled.";
+      +" wallets still in the running completed today. The estimated share can change until the streak ends. Testnet claims are disabled.";
   }
   let claimEpoch=null, claimPending=false;
   const claimButton=el("hplStreakClaimButton");
