@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>HPL Games — Ball Drop V3 Alpha</title>
+<title>HPL Games — Ball Drop V4 Testnet Alpha</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -292,6 +292,7 @@
       <button id="logoutBtn" type="button" class="wallet-refresh" style="margin:0" hidden>Log Out</button>
       <button id="fullscreenBtn" type="button" class="wallet-refresh" style="margin:0" aria-pressed="false">Full screen</button>
       <button id="myWalletBtn" type="button" class="wallet-refresh" style="margin:0">My Wallet</button>
+      <button id="hplStreakOpen" type="button" class="wallet-refresh" style="margin:0" aria-haspopup="dialog" aria-controls="hplStreakDialog">🔥 Daily Streak</button>
       <details class="help-menu" id="helpMenu">
         <summary aria-label="Open Help menu">☰ Help</summary>
         <div class="help-panel">
@@ -449,7 +450,7 @@
     </aside>
   </div>
 
-  <div class="footer">HPL Games · V3 Alpha · Build 3.60 · Testnet only</div>
+  <div class="footer">HPL Games · V4 Testnet Alpha · Build 3.60 · Testnet only</div>
 </div>
 
 <div id="fullscreenNotice" class="fullscreen-notice" role="status" hidden><span id="fullscreenNoticeText"></span><button id="dismissFullscreenNoticeBtn" type="button" aria-label="Dismiss fullscreen message">×</button></div>
@@ -457,7 +458,7 @@
   <div class="mobile-panel-header"><div><h2 id="mobilePanelTitle">Marketplace</h2><p class="mobile-round-clock" data-mobile-clock>Round continues while you browse</p></div><button id="closeMobilePanelBtn" class="wallet-refresh" type="button">Back to game ✕</button></div>
   <div id="mobileMarketContent" hidden><p class="notice">Stock up anytime. Your round keeps running. Return to the game to activate owned powerups.</p><div id="mobileMarketHome"></div></div>
   <div id="mobileStandingsContent" hidden><div id="mobileStandingsHome"></div><div id="mobileTournamentHome"></div><p class="notice">Standings update while you browse. Final results appear after score validation.</p></div>
-  <div id="mobileMoreContent" hidden><p class="notice">Connect Wallet uses your MetaMask extension when available, or connects to the MetaMask mobile app. Approve connection and signing requests in MetaMask, then return here.</p><a class="wallet-refresh" style="display:inline-block;color:var(--text)" href="https://link.metamask.io/dapp/hplgames.com/alpha/">Open game inside MetaMask</a><p id="fullscreenHelpStatus" class="notice">Use the fullscreen button at the top to try it. Your browser and phone control which system bars can hide.</p><button id="mobileConnectBtn" type="button" class="wallet-refresh">Connect / change wallet</button><a href="https://hplgames-rgb.github.io/ball-drop-poc/wallet/" target="_blank" rel="noopener" class="wallet-refresh" style="display:inline-block;color:var(--text)">Open standalone HPL wallet ↗</a><div id="mobileLogoutHome"></div><div id="mobileHelpHome"></div><div id="mobileLastRoundHome"></div><div id="mobileHistoryHome"></div><div id="mobileStatusHome"></div><p class="notice">Wallet connection uses MetaMask Connect, copyright ConsenSys Software Inc. <a href="https://hplgames-rgb.github.io/ball-drop-poc/v3-alpha/assets/metamask-connect-notices.txt" target="_blank" rel="noopener" style="color:var(--muted)">Third-party notices</a></p><p class="notice">V3 Alpha · Build 3.60 · Base Sepolia test tokens have no monetary value.</p></div>
+  <div id="mobileMoreContent" hidden><p class="notice">Connect Wallet uses your MetaMask extension when available, or connects to the MetaMask mobile app. Approve connection and signing requests in MetaMask, then return here.</p><a class="wallet-refresh" style="display:inline-block;color:var(--text)" href="https://link.metamask.io/dapp/hplgames.com/alpha/">Open game inside MetaMask</a><p id="fullscreenHelpStatus" class="notice">Use the fullscreen button at the top to try it. Your browser and phone control which system bars can hide.</p><button id="mobileConnectBtn" type="button" class="wallet-refresh">Connect / change wallet</button><a href="https://hplgames-rgb.github.io/ball-drop-poc/wallet/" target="_blank" rel="noopener" class="wallet-refresh" style="display:inline-block;color:var(--text)">Open standalone HPL wallet ↗</a><div id="mobileLogoutHome"></div><div id="mobileHelpHome"></div><div id="mobileLastRoundHome"></div><div id="mobileHistoryHome"></div><div id="mobileStatusHome"></div><p class="notice">Wallet connection uses MetaMask Connect, copyright ConsenSys Software Inc. <a href="https://hplgames-rgb.github.io/ball-drop-poc/v3-alpha/assets/metamask-connect-notices.txt" target="_blank" rel="noopener" style="color:var(--muted)">Third-party notices</a></p><p class="notice">V4 Testnet Alpha · Build 3.60 · Base Sepolia test tokens have no monetary value.</p></div>
 </dialog>
 <dialog id="testerGuide" aria-labelledby="testerGuideTitle">
   <div class="metric-label gold">HPL Games · Private Alpha · Base Sepolia</div>
@@ -1434,6 +1435,7 @@ async function advanceRound(){if(testingPaused)return;
         const result=await edgeRequest("ball-drop-complete-session",{session_token:state.sessionToken,game_session_id:state.gameSessionId});
         if(state.gameSessionId!==lifecycleSession || state.sessionToken!==lifecycleToken) return;
         if(result.completed!==true) throw new Error(result.error||"Completion failed");
+        window.dispatchEvent(new CustomEvent("hpl:ball-drop-session-completed",{detail:{gameSessionId:lifecycleSession}}));
       }
       if(serverNow()>deadline && !state.resultSubmitted) $("apiStatus").textContent="Round submission window closed before score confirmation.";
       state.completed=true;
@@ -2576,6 +2578,215 @@ window.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById(
 <button id="soundToggle" type="button" aria-pressed="false" aria-label="Enable game sound">Sound: Off</button><script>
 /* Marketplace information overlay (display only; checkout remains unchanged). */
 (()=>{const dialog=document.getElementById('shopInfoDialog');if(!dialog)return;document.querySelectorAll('[data-shop-info]').forEach(button=>button.addEventListener('click',()=>{if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');}));document.getElementById('shopInfoClose')?.addEventListener('click',()=>dialog.close?.());dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close?.();});})();
+</script>
+<!-- V4 Daily Streak lives in its own overlay, separate from the Ball Drop layout. -->
+<style>
+#hplStreakDialog{width:min(780px,calc(100vw - 24px));max-height:min(88dvh,900px);overflow:auto;border:1px solid #33536c;border-radius:18px;padding:0;background:#07111f;color:#f4f7fb;box-shadow:0 24px 100px #000b}
+#hplStreakDialog::backdrop{background:rgba(1,8,18,.82);backdrop-filter:blur(5px)}
+#hplStreakDialog .hpl-streak-top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 20px 0}
+#hplStreakDialog .hpl-streak-top h2{margin:0;font-size:20px}
+#hplStreakClose{border:1px solid #33536c;border-radius:10px;background:#10243b;color:#fff;padding:8px 12px;cursor:pointer}
+#hplStreakPanel{margin:0!important;max-width:none!important;border:0!important;background:transparent!important;box-shadow:none!important}
+@media(max-width:600px){#hplStreakDialog .hpl-streak-top{padding:14px 14px 0}#hplStreakDialog .hpl-streak-top h2{font-size:18px}}
+</style>
+<dialog id="hplStreakDialog" aria-labelledby="hplStreakDialogTitle">
+  <div class="hpl-streak-top"><h2 id="hplStreakDialogTitle">🔥 Daily Streak</h2><button type="button" id="hplStreakClose" aria-label="Close Daily Streak">✕ Close</button></div>
+<!-- HPL V4 Checkpoint 1 — development-only daily streak panel -->
+<style>
+#hplStreakPanel{position:relative;max-width:1250px;margin:12px auto;padding:16px;border:1px solid #33536c;border-radius:14px;background:#0d1b2d;color:#f4f7fb;font:14px Inter,Segoe UI,Arial,sans-serif}
+#hplStreakPanel .hpl-streak-days{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px;margin:12px 0}
+#hplStreakPanel .hpl-streak-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin:12px 0 6px}
+#hplStreakPanel .hpl-streak-summary[hidden]{display:none}
+#hplStreakPanel .hpl-streak-stat{padding:10px 12px;border:1px solid #24405e;border-radius:10px;background:#10243b}
+#hplStreakPanel .hpl-streak-stat strong{display:block;margin-top:4px;font-size:16px;overflow-wrap:anywhere}
+#hplStreakPanel .hpl-streak-day{padding:12px 6px;text-align:center;border:1px solid #24405e;border-radius:10px;background:#10243b}
+#hplStreakPanel .hpl-streak-day.done{border-color:#38e39b;color:#38e39b}
+#hplStreakPanel .hpl-streak-day.pending{border-color:#ffd34d}
+#hplStreakPanel .hpl-streak-meta{color:#8ea4bd;font-size:12px}
+#hplStreakPanel .hpl-streak-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+#hplStreakResults{margin-top:18px;padding-top:8px;border-top:1px solid #24405e}
+#hplStreakPanel button{padding:8px 12px;border:1px solid #33536c;border-radius:9px;background:#10243b;color:#f4f7fb;cursor:pointer}
+</style>
+<section id="hplStreakPanel" aria-label="Daily streak missions">
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><strong>🔥 V4 Daily Streak · Testnet</strong><span class="hpl-streak-meta">Admin-scheduled UTC days</span></div>
+  <p id="hplStreakStatus" role="status">Connect your wallet to begin today's missions.</p>
+  <div class="hpl-streak-summary" id="hplStreakSummary" hidden>
+    <div class="hpl-streak-stat"><span class="hpl-streak-meta">Simulated streak pool</span><strong id="hplStreakPool">—</strong></div>
+    <div class="hpl-streak-stat"><span class="hpl-streak-meta">Wallets still in the running</span><strong id="hplStreakWalletCount">—</strong></div>
+    <div class="hpl-streak-stat"><span class="hpl-streak-meta">Simulated share per qualifying wallet</span><strong id="hplStreakEstimate">—</strong></div>
+  </div>
+  <p class="hpl-streak-meta" id="hplStreakParticipation" hidden></p>
+  <div class="hpl-streak-days" id="hplStreakDays"><div class="hpl-streak-day">Day 1 · —</div><div class="hpl-streak-day">Day 2 · —</div><div class="hpl-streak-day">Day 3 · —</div></div>
+  <div class="hpl-streak-actions"><span id="hplStreakWallet">○ Connect wallet</span><span id="hplStreakRound">○ Score 50+ in a completed round</span><button type="button" id="hplStreakRefresh">Refresh status</button></div>
+  <p class="hpl-streak-meta">Complete one server-accepted Ball Drop round with at least 50 points. A single ball landing in a 0.5× bucket qualifies. No HPL required; streak payouts are disabled during testing.</p>
+  <section id="hplStreakResults" aria-labelledby="hplStreakResultsTitle" hidden>
+    <h3 id="hplStreakResultsTitle">Last completed streak</h3>
+    <p id="hplStreakResultStatus"></p>
+    <div class="hpl-streak-summary" id="hplStreakResultStats" hidden>
+      <div class="hpl-streak-stat"><span class="hpl-streak-meta">Simulated pool at close</span><strong id="hplStreakResultPool">—</strong></div>
+      <div class="hpl-streak-stat"><span class="hpl-streak-meta">Wallets that qualified</span><strong id="hplStreakResultWallets">—</strong></div>
+      <div class="hpl-streak-stat"><span class="hpl-streak-meta">Your simulated share</span><strong id="hplStreakResultShare">—</strong></div>
+    </div>
+    <p class="hpl-streak-meta" id="hplStreakClaimStatus" aria-live="polite"></p>
+    <button type="button" id="hplStreakClaimButton" hidden>Simulate claim</button>
+  </section>
+</section>
+</dialog>
+<script>
+/* The streak dialog shares the existing game's authenticated wallet session. */
+(()=>{
+  const dialog=document.getElementById("hplStreakDialog");
+  const open=document.getElementById("hplStreakOpen");
+  const close=document.getElementById("hplStreakClose");
+  if(!dialog||!open||!close)return;
+  open.addEventListener("click",()=>{if(!dialog.open)dialog.showModal();window.dispatchEvent(new Event("hpl:streak-opened"));});
+  close.addEventListener("click",()=>dialog.close());
+  dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});
+})();
+</script>
+<script>
+/* This script runs after the existing game script and shares its authenticated session state. */
+(()=>{
+  const el=id=>document.getElementById(id);
+  const panel=el("hplStreakPanel");
+  if(!panel)return;
+  const dayLabel=day=>new Date(day+"T00:00:00Z").toLocaleDateString(undefined,{month:"short",day:"numeric",timeZone:"UTC"});
+  const dialogOpen=()=>el("hplStreakDialog").open;
+  let busy=false, refreshQueued=false, checkedToken=null, checkedDay=null, activeToken=null;
+  const setStatus=text=>{el("hplStreakStatus").textContent=text;};
+  function formatStreakHpl(value){
+    if(typeof value!=="string"||!/^\d+$/.test(value))return "—";
+    const wei=BigInt(value);
+    const cent=10n**16n;
+    if(wei>0n&&wei<cent)return "<0.01 TEST-HPL";
+    const cents=wei/cent;
+    return (cents/100n).toLocaleString()+"."+(cents%100n).toString().padStart(2,"0")+" TEST-HPL";
+  }
+  function showSummary(summary){
+    const grid=el("hplStreakSummary");
+    const progress=el("hplStreakParticipation");
+    grid.hidden=!summary;
+    progress.hidden=!summary;
+    if(!summary)return;
+    const wallets=summary.wallets_in_running;
+    const completed=summary.wallets_completed_today;
+    el("hplStreakPool").textContent=formatStreakHpl(summary.simulated_pool_wei);
+    el("hplStreakWalletCount").textContent=wallets.toLocaleString();
+    el("hplStreakEstimate").textContent=wallets?formatStreakHpl(summary.simulated_payout_wei):"—";
+    progress.textContent=completed.toLocaleString()+" of "+wallets.toLocaleString()
+      +" wallets still in the running completed today. The simulated share can change until the streak ends. Test payouts disabled.";
+  }
+  let claimEpoch=null, claimPending=false;
+  const claimButton=el("hplStreakClaimButton");
+  function showCompleted(result, unavailable=false){
+    claimEpoch=result?.epoch_id??null;
+    claimButton.hidden=!result?.can_simulate_claim;
+    const container=el("hplStreakResults");
+    container.hidden=!result&&!unavailable;
+    el("hplStreakResultStats").hidden=!result;
+    el("hplStreakClaimStatus").textContent="";
+    if(!result){
+      el("hplStreakResultStatus").textContent=unavailable?"Completed results are temporarily unavailable.":"";
+      return;
+    }
+    const outcome=result.reconciling?"Reconciling final results":result.qualified?"Qualified":"Did not qualify";
+    el("hplStreakResultStatus").textContent="Epoch #"+result.epoch_id+" · "+result.days_completed+" / "+result.duration_days+" days · "+outcome;
+    el("hplStreakResultPool").textContent=formatStreakHpl(result.simulated_pool_wei);
+    el("hplStreakResultWallets").textContent=result.qualifying_wallets.toLocaleString();
+    el("hplStreakResultShare").textContent=formatStreakHpl(result.simulated_share_wei);
+    const receipt=result.simulated_claim;
+    el("hplStreakClaimStatus").textContent=receipt
+      ?"Simulated claim recorded for "+formatStreakHpl(receipt.amount_wei)+". No tokens transferred."
+      :result.reconciling
+        ?"Results may change during the one-hour reconciliation period."
+        :result.can_simulate_claim
+          ?"Record a simulated claim for this wallet. No tokens will be transferred."
+          :"Simulation only. TEST-HPL claims are disabled.";
+  }
+  claimButton.addEventListener("click",async ()=>{
+    const token=state.sessionToken;
+    if(!token||!claimEpoch||claimPending||busy)return;
+    claimPending=true;
+    claimButton.disabled=true;
+    try{
+      const result=await edgeRequest("hpl-daily-streak",{session_token:token,action:"simulate_claim",epoch_id:claimEpoch});
+      if(state.sessionToken===token)showCompleted(result.completed_result);
+    }catch(err){
+      if(state.sessionToken===token)el("hplStreakClaimStatus").textContent=err?.message||"Unable to record simulated claim.";
+    }finally{
+      claimPending=false;
+      claimButton.disabled=false;
+      if(state.sessionToken!==token)void refresh();
+    }
+  });
+  const reset=()=>{
+    checkedToken=null;checkedDay=null;activeToken=null;
+    showSummary(null);
+    showCompleted(null);
+    el("hplStreakWallet").textContent="○ Connect wallet";
+    el("hplStreakRound").textContent="○ Score 50+ in a completed round";
+    el("hplStreakDays").innerHTML="";
+    for(let i=1;i<=3;i++){const d=document.createElement("div");d.className="hpl-streak-day";d.textContent="Day "+i+" · —";el("hplStreakDays").append(d);}
+    setStatus("Connect your wallet to begin today's missions.");
+  };
+  async function refresh(){
+    if(claimPending)return;
+    if(busy){refreshQueued=true;return;}
+    const token=typeof state!=="undefined" ? state.sessionToken : null;
+    if(!token){if(activeToken!==null)reset();return;}
+    const paused=typeof testingPaused!=="undefined"&&testingPaused;
+    if(paused&&!dialogOpen())return;
+    busy=true;activeToken=token;
+    try{
+      const utcToday=new Date().toISOString().slice(0,10);
+      const action=paused||(checkedToken===token&&checkedDay===utcToday)?"status":"checkin";
+      const result=await edgeRequest("hpl-daily-streak",{session_token:token,action,include_summary:dialogOpen()});
+      if(state.sessionToken!==token)return;
+      if(!paused){
+        checkedToken=token;
+        checkedDay=result.today||utcToday;
+      }
+      const today=result.today_status||{};
+      const epoch=result.epoch;
+      if(dialogOpen()&&Object.hasOwn(result,"completed_result"))showCompleted(result.completed_result,result.completed_result_unavailable);
+      showSummary(epoch?result.summary:null);
+      if(epoch&&dialogOpen()&&!result.summary){
+        const progress=el("hplStreakParticipation");
+        progress.hidden=false;
+        progress.textContent="Streak pool and wallet totals are temporarily unavailable.";
+      }
+      const history=Array.isArray(result.history)?result.history:[];
+      const days=el("hplStreakDays");days.replaceChildren();
+      if(!epoch){
+        el("hplStreakWallet").textContent="○ Awaiting streak start";
+        el("hplStreakRound").textContent="○ No active challenge";
+        setStatus(result.next_epoch?"Next streak starts "+result.next_epoch.starts_on+" UTC.":"No active streak. Waiting for an admin to schedule the next challenge.");
+        return;
+      }
+      el("hplStreakWallet").textContent=today.wallet_connected?"✓ Wallet connected":"○ Connect wallet";
+      el("hplStreakRound").textContent=today.round_played?"✓ 50+ point round completed":"○ Play one Ball Drop round";
+      for(const [i,day] of history.entries()){
+        const d=document.createElement("div");
+        const upcoming=day.day>result.today;
+        d.className="hpl-streak-day "+(day.qualified?"done":day.day===result.today?"pending":"");
+        d.textContent="Day "+(i+1)+" ("+dayLabel(day.day)+") · "+(day.qualified?"✓ Complete":upcoming?"Upcoming":day.day<result.today?"Missed":day.round_played?"Needs check-in":day.wallet_connected?"Needs round":"Incomplete");
+        d.title=day.day+" UTC";days.append(d);
+      }
+      setStatus(today.qualified?"Today's missions complete! Epoch #"+epoch.id+" · "+result.consecutive_days+" / "+result.streak_length:"Streak epoch #"+epoch.id+" · "+epoch.starts_on+" through "+epoch.ends_on+" (end exclusive, UTC). Complete today's two missions.");
+    }catch(err){if(state.sessionToken===token){showSummary(null);showCompleted(null);setStatus("Streak status unavailable: "+(err?.message||"Please retry"));}}
+    finally{
+      busy=false;
+      if(refreshQueued){refreshQueued=false;queueMicrotask(()=>{void refresh();});}
+    }
+  }
+  el("hplStreakRefresh").addEventListener("click",()=>{void refresh();});
+  window.addEventListener("hpl:ball-drop-session-completed",()=>{void refresh();});
+  window.addEventListener("hpl:streak-opened",()=>{void refresh();});
+  window.addEventListener("focus",()=>{void refresh();});
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)void refresh();});
+  setInterval(()=>{void refresh();},30000);
+  void refresh();
+})();
 </script>
 </body>
 </html>
