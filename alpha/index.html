@@ -2319,7 +2319,7 @@ async function rewardSnapshot(wallet,provider,receiptBlock=null){
  const sources=results.map((r,i)=>r.status==="fulfilled"?{...targets[i],...r.value}:{...targets[i],loaded:false,amount:null,paused:false,feeExempt:false,error:"Rewards read unavailable"});
  return {block,sources,amount:sources.every(s=>s.loaded)?sources.reduce((sum,s)=>sum+s.amount,0n):null};
 }
-async function refreshGameRewards(){if(!hplClientActive())return;if(testingPaused)return;
+async function refreshGameRewards(){if(document.hidden || testingPaused)return;
  if(!state.sessionToken || !state.provider || !state.wallet || rewardState.readBusy || rewardState.busy)return;
  const wallet=state.wallet,token=state.sessionToken,epoch=purchaseState.epoch,provider=state.provider;
  rewardState.readBusy=true;renderGameRewards();
@@ -2405,7 +2405,11 @@ async function claimGameRewards(){
 $("claimGameRewardsBtn").addEventListener("click",()=>void claimGameRewards());
 $("refreshGameRewardsBtn").addEventListener("click",()=>{rewardState.notice="";void refreshGameRewards();if($("walletOverlay").open)void refreshRewardHistory();});
 // Only poll while the full wallet is open; no per-ball or extra Supabase requests.
-setInterval(()=>{if($("walletOverlay").open && document.visibilityState!=="hidden" && state.sessionToken && Date.now()-rewardState.lastRefresh>=30000)void refreshGameRewards();renderGameRewards();},30000);
+function refreshVisibleGameRewards(){
+ if(!document.hidden && state.sessionToken && Date.now()-rewardState.lastRefresh>=30000)void refreshGameRewards();
+}
+setInterval(refreshVisibleGameRewards,30000);
+document.addEventListener("visibilitychange",refreshVisibleGameRewards);
 
 const rewardHistory={rows:[],loaded:false,busy:false,error:"",offset:0,more:false,generation:0};
 function renderRewardHistory(){
