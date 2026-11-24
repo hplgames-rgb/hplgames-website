@@ -7,15 +7,13 @@
 <a id="play-mobile" href="https://link.metamask.io/dapp/hplgames.com/alpha/">Mobile / Tablet <small>Open in MetaMask</small></a>
 <a class="alpha-wallet-link" href="/wallet/">HPL Wallet <small>Open the standalone wallet</small></a>
 </div>
-<details id="metamask-help"><summary>MetaMask installed but the game won’t open?</summary><p>In MetaMask, tap Explore, open its browser, and enter <strong>https://hplgames.com/alpha/</strong>.</p></details>
+<details id="metamask-help"><summary>MetaMask installed but the game won’t open?</summary><p>On Android, go to Settings → Apps → MetaMask → Open by default and enable Open supported links. You can also open MetaMask → Explore → browser and enter <strong>https://hplgames.com/alpha/</strong>.</p></details>
 </section><footer>© 2026 HPL Games LLC · Testnet tokens have no monetary value. Not an investment offer.</footer></main><script>
 const playMobile = document.getElementById("play-mobile");
 const metaMaskHelp = document.getElementById("metamask-help");
 if (/MetaMaskMobile/i.test(navigator.userAgent)) {
   playMobile.href = "/alpha/";
-} else if (/Android/i.test(navigator.userAgent)) {
-  const fallback = encodeURIComponent("https://hplgames.com/#metamask-help");
-  playMobile.href = "intent://link.metamask.io/dapp/hplgames.com/alpha/#Intent;scheme=https;package=io.metamask;S.browser_fallback_url=" + fallback + ";end";
+
 }
 if (location.hash === "#metamask-help") metaMaskHelp.open = true;
 </script></body></html>
