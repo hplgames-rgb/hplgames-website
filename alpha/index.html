@@ -2936,7 +2936,8 @@ window.addEventListener('DOMContentLoaded',()=>{const b=document.getElementById(
   window.addEventListener("hpl:streak-opened",()=>{void refresh();});
   window.addEventListener("focus",()=>{void refresh();});
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)void refresh();});
-  setInterval(()=>{void refresh();},30000);
+  setInterval(()=>{if(!dialogOpen())void refresh();},30000);
+  setInterval(()=>{if(dialogOpen()&&!document.hidden)void refresh();},10000);
   void refresh();
 })();
 </script>
